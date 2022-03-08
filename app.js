@@ -11,34 +11,50 @@ function getData(url) {
   return JSON.parse(ajax.response)
 }
 
+function newsFeed() {
   const newsFeed = getData(NEWS_URL);
-  const ul =document.createElement('ul');
+  const newsList = [];
 
-window.addEventListener('hashchange', function(){
+  newsList.push('<ul>');
+
+  for(let i= 0; i< 10; i++){
+    newsList.push(`
+      <li>
+        <a href="#${newsFeed[i].id}">
+          ${newsFeed[i].title} (${newsFeed[i].comments_count})
+        </a>
+      </li>
+    `);
+  }
+  newsList.push('</ul>')
+
+  container.innerHTML = newsList.join('');
+}  
+
+function newsDatail(){
   const id = location.hash.substring(1);
 
-  const newsContent = getData(CONTENT_URL);
-  const title = document.createElement('h1');
+  const newsContent = getData(CONTENT_URL.replace('@id', id));
 
-  title.innerHTML = newsContent.title;
+    container.innerHTML = `
+      <h1>${newsContent.title}</h1>
+      
+      <div>
+        <a href="#">목록으로</a>
+      </div>
+    `;
+  }
 
-  content.appendChild(title);
-});
+function router() {
+  const routePath = location.hash;
 
-for(let i= 0; i<10; i++){
-  const div = document.createElement('div');
-
-  div.innerHTML = `
-    <li>
-      <a href="#${newsFeed[i].id}">
-        ${newsFeed[i].title} (${newsFeed[i].comments_count})
-      </a>
-    </li>
-  `;
-
-  //ul.appendChild(div.children[0]);
-  ul.appendChild(div.firstElementChild)
+  if(routePath === '') {
+    newsFeed();
+  }else {
+    newsDatail();
+  }
 }
 
-container.appendChild(ul);
-container.appendChild(content);
+window.addEventListener('hashchange', router);
+
+router();
