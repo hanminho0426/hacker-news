@@ -18,7 +18,7 @@ interface NewsFeed extends News {
   read?: boolean;
 }
 
-interface NewsDatail extends News {
+interface NewsDetail extends News {
   readonly comments: NewsComment[];
 }
 
@@ -36,12 +36,44 @@ const store: Store = {
   feeds: [],
 };
 
-function getData<AjaxResponse>(url: string): AjaxResponse {
-  ajax.open('GET', url, false);
-  ajax.send();
-
-  return JSON.parse(ajax.response)
+function applyApiMixins(targetClass: any, baseClasses: any[]): void {
+  baseClasses.forEach(baseClass => {
+    Object.getOwnPropertyNames(baseClass.prototype).forEach(name => {
+      const descriptor = Object.getOwnPropertyDescriptor(baseClass.prototype, name);
+    
+      if(descriptor) {
+        Object.defineProperty(targetClass.prototype, name, descriptor);
+      }
+    });
+  });
 }
+
+class Api {
+  getRequest<AjaxResponse>(url: string): AjaxResponse {
+    const ajax = new XMLHttpRequest();
+    ajax.open('GET', url, false);
+    ajax.send();
+  
+    return JSON.parse(ajax.response);
+  }
+}
+
+class NewsFeedApi {
+  getData(): NewsFeed[] {
+    return this.getRequest<NewsFeed[]>(NEWS_URL);
+  }
+}
+
+class NewsDetailApi {
+  getData(id: string): NewsDetail[] {
+    return this.getRequest<NewsDetail[]>(CONTENT_URL.replace('@id', id));
+  }
+}
+
+interface NewsFeedApi extends Api {};
+interface NewsDetailApi extends Api {};
+applyApiMixins(NewsFeedApi, [Api]);
+applyApiMixins(NewsDetailApi, [Api]);
 
 function makeFeeds(feeds: NewsFeed[]): NewsFeed[] {
   for(let i = 0; i < feeds.length; i++) {
@@ -60,6 +92,7 @@ function updateView(html: string): void {
 }
 
 function newsFeed(): void {
+  const api = new NewsFeedApi();
   let newsFeed: NewsFeed[] = store.feeds;
   const newsList = [];
   let template =  `
@@ -82,16 +115,16 @@ function newsFeed(): void {
             </div>
           </div>
         <div class="p-4 text-2xl text-gray-700">
-        {{__news_feed__}}        
+          {{__news_feed__}}        
         </div>
       </div>
   `;
 
   if(newsFeed.length === 0){
-    newsFeed = store.feeds = makeFeeds(getData<NewsFeed[]>(NEWS_URL));
+    newsFeed = store.feeds = makeFeeds(api.getData());
   }
 
-  for(let i= (store.currentPage - 1) * 10; i< store.currentPage * 10; i++){
+  for(let i= (store.currentPage - 1) * 10; i < store.currentPage * 10; i++) {
     newsList.push(`
       <div class="p-6 ${newsFeed[i].read ? 'bg-red-500' : 'bg-white' } mt-6 rounded-lg shadow-md transition-colors duration-500 hover:bg-green-100">
         <div class="flex">
@@ -120,9 +153,10 @@ function newsFeed(): void {
   updateView(template);
 }  
 
-function newsDatail(): void{
+function newsDetail(): void{
   const id = location.hash.substring(7);
-  const newsContent = getData<NewsDatail>(CONTENT_URL.replace('@id', id));
+  const api = new NewsDetailApi();
+  const newsDetail: NewsDetail = api.getData(id);
   let template = `
       <div class="bg-gray-600 min-h-screen pb-8">
         <div class="bg-white text-xl">
@@ -141,9 +175,9 @@ function newsDatail(): void{
       </div>
 
       <div class="h-full border rounded-xl bg-white m-6 p-4 ">
-        <h2>${newsContent.title}</h2>
+        <h2>${newsDetail.title}</h2>
         <div class="text-gray-400 h-20">
-          ${newsContent.content}
+          ${newsDetail.content}
         </div>
 
           {{__comments__}}
@@ -159,7 +193,7 @@ for (let i = 0; i < store.feeds.length; i++) {
   }
 }
 
-  updateView(template.replace('{{__comments__}}', makeComment(newsContent.comments)));
+  updateView(template.replace('{{__comments__}}', makeComment(newsDetail.comments)));
 }
 
 function makeComment(comments: NewsComment[]): string {
@@ -178,7 +212,7 @@ function makeComment(comments: NewsComment[]): string {
       </div>      
     `);
 
-    if(comment.comments.length> 0){
+    if(comment.comments.length > 0){
       commentString.push(makeComment(comment.comments));
     }
   }
@@ -191,11 +225,11 @@ function router(): void {
 
   if(routePath === '') {
     newsFeed();
-  }else if(routePath.indexOf('#/page/') >= 0){
+  } else if(routePath.indexOf('#/page/') >= 0){
     store.currentPage = Number(routePath.substring(7));
     newsFeed();
-  }else{
-    newsDatail();
+  } else{
+    newsDetail();
   }
 }
 
