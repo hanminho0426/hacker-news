@@ -2,7 +2,7 @@
   "compilerOptions": {
     "strict": true,
     "target": "ES5",
-    "module":"CommonJS",
+    "module": "CommonJS",
     "alwaysStrict": true,
     "noImplicitAny": true,
     "noImplicitThis": true,
