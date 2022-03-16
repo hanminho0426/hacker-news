@@ -2,11 +2,9 @@ import { NEWS_URL, CONTENT_URL } from '../config';
 import { NewsFeed, NewsDetail } from '../types';
 
 export default class Api {
-  xhr: XMLHttpRequest;
   url: string;
 
   constructor(url: string) {
-    this.xhr = new XMLHttpRequest();
     this.url = url;
   }
 
@@ -21,12 +19,10 @@ export class NewsFeedApi extends Api {
     super(NEWS_URL);
   }
 
-
   async getData(): Promise<NewsFeed[]> {
     return this.request<NewsFeed[]>();
   }
 }
-
 
 export class NewsDetailApi extends Api {
   constructor(id: string) {
