@@ -1,30 +1,39 @@
-import { NewsFeed, NewsDetail } from '../types'
+import { NEWS_URL, CONTENT_URL } from '../config';
+import { NewsFeed, NewsDetail } from '../types';
 
-export class Api {
-  ajax: XMLHttpRequest;
+export default class Api {
+  xhr: XMLHttpRequest;
   url: string;
 
   constructor(url: string) {
-    this.ajax = new XMLHttpRequest();
+    this.xhr = new XMLHttpRequest();
     this.url = url;
   }
 
-  getRequest<AjaxResponse>(): AjaxResponse {
-    this.ajax.open('GET', this.url, false);
-    this.ajax.send();
-
-    return JSON.parse(this.ajax.response);
+  async request<AjaxResponse>(): Promise<AjaxResponse> {
+    const response = await fetch(this.url)
+    return await response.json() as AjaxResponse;
   }
 }
 
-export class NewsFeedApi extends Api{
-  getData(): NewsFeed[] {
-    return this.getRequest<NewsFeed[]>();
+export class NewsFeedApi extends Api {
+  constructor() {
+    super(NEWS_URL);
+  }
+
+
+  async getData(): Promise<NewsFeed[]> {
+    return this.request<NewsFeed[]>();
   }
 }
 
-export class NewsDetailApi extends Api{
-  getData(): NewsDetail {
-    return this.getRequest<NewsDetail>();
+
+export class NewsDetailApi extends Api {
+  constructor(id: string) {
+    super(CONTENT_URL.replace('@id', id));
   }
-}   
+
+  async getData(): Promise<NewsDetail> {
+    return this.request<NewsDetail>();
+  }
+}
