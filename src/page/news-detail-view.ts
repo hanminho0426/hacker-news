@@ -3,7 +3,7 @@ import { NewsDetailApi } from '../core/api';
 import { NewsComment, NewsDetail, NewsStore } from '../types';
 
 const template = `
-<div class="bg-gray-600 min-h-screen pb-8">
+<div class="bg-yellow-600 min-h-screen pb-8">
   <div class="bg-white text-xl">
     <div class="mx-auto px-4">
       <div class="flex justify-between items-center py-6">
